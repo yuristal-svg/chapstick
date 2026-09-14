@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>젓가락 구체물 옮기기 훈련</title>
+<style>
+  :root{
+    --navy: #16213E;
+    --navy-deep: #0F172E;
+    --ivory: #FBF8F1;
+    --ivory-dim: #F1ECDF;
+    --amber: #F5A623;
+    --amber-dark: #C97F0B;
+    --teal: #2EC4B6;
+    --teal-dark: #1F9C90;
+    --ink: #1B1B1F;
+    --danger: #E0575B;
+    --gold: #F2C14E;
+    --silver: #C6CBD4;
+    --bronze: #D08A56;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    background: var(--navy);
+    color: var(--ink);
+    -webkit-tap-highlight-color: transparent;
+  }
+  body{
+    display:flex; align-items:center; justify-content:center;
+    min-height:100vh;
+    padding: 18px;
+    transition: background 0.35s ease;
+  }
+  body.timing-mode{ background: var(--navy-deep); }
+
+  .device{
+    width:100%; max-width: 640px;
+    background: var(--ivory);
+    border-radius: 32px;
+    border: 8px solid var(--navy);
+    box-shadow: 0 22px 0 -10px rgba(0,0,0,0.25), 0 24px 48px rgba(0,0,0,0.35);
+    overflow:hidden;
+    display:flex; flex-direction:column;
+    max-height: 92vh;
+    position: relative;
+  }
+  @media (min-width: 900px){
+    .device{ max-width: 760px; }
+  }
+  .modal-overlay{
+    position:absolute; inset:0; background: rgba(15,23,46,0.55);
+    display:none; align-items:center; justify-content:center; padding:26px; z-index:50;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-card{
+    background:#fff; border-radius:18px; padding:24px 20px; width:100%; max-width:300px; text-align:center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  }
+  .modal-card p{ font-size:15px; font-weight:700; color:var(--ink); margin:0 0 20px; line-height:1.55; }
+  .modal-actions{ display:flex; gap:10px; }
+  .modal-actions button{ flex:1; padding:13px; border-radius:12px; border:none; font-weight:800; font-size:14px; cursor:pointer; }
+  .modal-cancel{ background: var(--ivory-dim); color: var(--ink); }
+  .modal-confirm{ background: var(--danger); color:#fff; }
+  body.timing-mode .device{
+    background: var(--navy-deep);
+    border-color: var(--amber-dark);
+  }
+
+  .device-header{
+    padding: 26px 30px 20px;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom: 2px dashed rgba(27,27,31,0.12);
+  }
+  body.timing-mode .device-header{ border-bottom-color: rgba(245,166,35,0.25); }
+  .title-block h1{
+    margin:0; font-size: 24px; letter-spacing: -0.2px; color: var(--ink);
+  }
+  body.timing-mode .title-block h1{ color: var(--ivory); }
+  .title-block p{ margin:4px 0 0; font-size:15px; color:#6b6b73; }
+  body.timing-mode .title-block p{ color:#9aa3c2; }
+
+  .icon-btn{
+    background: var(--ivory-dim); border:none; border-radius:14px;
+    width:56px; height:56px; font-size:26px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition: transform 0.15s ease;
+  }
+  .icon-btn:active{ transform: scale(0.92); }
+
+  .screen{ flex:1; display:none; flex-direction:column; padding: 34px 30px 30px; overflow-y:auto; min-height:0; }
+  .screen.active{ display:flex; }
+
+  /* ---------- ENTRY ---------- */
+  .chopstick-emoji{ font-size:76px; text-align:center; margin-bottom:8px; }
+  .lead{ text-align:center; color:#55555c; font-size:18px; margin: 0 0 32px; line-height:1.5; }
+
+  label.field-label{ font-size:17px; font-weight:700; color:var(--ink); margin-bottom:10px; display:block; }
+  input[type="text"]{
+    width:100%; font-size:30px; padding:20px 18px; border-radius:16px;
+    border: 3px solid #E4DECB; background:#fff; font-weight:700; color:var(--ink);
+    text-align:center;
+  }
+  input[type="text"]:focus{ outline:none; border-color: var(--amber); }
+  .hint-error{ color: var(--danger); font-size:15px; text-align:center; margin-top:10px; min-height:20px; font-weight:600; }
+
+  .primary-btn{
+    margin-top:auto;
+    background: var(--teal); color:#fff; border:none; border-radius:18px;
+    padding:24px; font-size:24px; font-weight:800; cursor:pointer;
+    box-shadow: 0 6px 0 var(--teal-dark);
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+  .primary-btn:active{ transform: translateY(4px); box-shadow: 0 2px 0 var(--teal-dark); }
+  .primary-btn:disabled{ background:#c9c9c9; box-shadow:0 6px 0 #a8a8a8; cursor:not-allowed; }
+
+  .amber-btn{ background: var(--amber); box-shadow: 0 6px 0 var(--amber-dark); }
+  .amber-btn:active{ box-shadow: 0 2px 0 var(--amber-dark); }
+
+  .ghost-link{
+    background:none; border:none; color:#7a7a82; font-size:16px; text-decoration:underline;
+    margin-top:18px; cursor:pointer; text-align:center;
+  }
+  body.timing-mode .ghost-link{ color:#9aa3c2; }
+
+  /* ---------- TIMING ---------- */
+  .timing-screen{ align-items:center; justify-content:center; text-align:center; }
+  .timing-name{ color: var(--ivory); font-size:28px; font-weight:800; margin-bottom:10px; }
+  .timing-sub{ color:#9aa3c2; font-size:16px; margin-bottom:44px; }
+  .timer-display{
+    font-size: 88px; font-weight:800; color: var(--amber);
+    font-variant-numeric: tabular-nums; letter-spacing:1px;
+    margin-bottom: 52px;
+  }
+  .pulse-dot{ display:inline-block; width:14px; height:14px; border-radius:50%; background:var(--danger); margin-right:10px; animation: pulse 1s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+
+  .stop-btn{
+    width:160px; height:160px; border-radius:50%; border:none;
+    background: var(--danger); color:#fff; font-size:22px; font-weight:800;
+    box-shadow: 0 8px 0 #a83d40; cursor:pointer;
+  }
+  .stop-btn:active{ transform: translateY(4px); box-shadow: 0 2px 0 #a83d40; }
+
+  /* ---------- RESULT ---------- */
+  .result-screen{ align-items:center; text-align:center; }
+  .celebrate{ font-size:56px; font-weight:900; color:var(--ink); margin: 8px 0 2px; }
+  .celebrate span{ display:block; font-size:20px; color:#6b6b73; font-weight:700; margin-top:8px; }
+  .result-time{
+    margin: 22px 0 32px; background: var(--navy); color: var(--amber);
+    font-size:48px; font-weight:800; padding: 18px 32px; border-radius:18px;
+    font-variant-numeric: tabular-nums;
+  }
+  .confetti-wrap{ position:relative; width:100%; height:0; }
+  .confetti{
+    position:absolute; top:-10px; width:8px; height:14px; opacity:0.9;
+    animation: fall 1.4s ease-in forwards;
+  }
+  @keyframes fall{ to{ transform: translateY(220px) rotate(360deg); opacity:0; } }
+
+  .photo-box{
+    width:100%; aspect-ratio: 4/3; border-radius:18px; border:3px dashed #d8d1bb;
+    background:#fff; display:flex; align-items:center; justify-content:center;
+    overflow:hidden; margin-bottom:20px; position:relative;
+  }
+  .photo-box img{ width:100%; height:100%; object-fit:cover; }
+  .photo-placeholder{ color:#a3a3aa; font-size:17px; text-align:center; padding:10px; }
+  .photo-placeholder .emoji{ font-size:44px; display:block; margin-bottom:8px; }
+
+  .row-btns{ display:flex; gap:12px; width:100%; }
+  .row-btns .primary-btn{ margin-top:0; flex:1; }
+  .secondary-outline{
+    background:#fff; color:var(--ink); border:3px solid #E4DECB; border-radius:18px;
+    padding:22px; font-size:19px; font-weight:800; cursor:pointer; flex:1;
+  }
+
+  /* ---------- LEADERBOARD ---------- */
+  .tabbar{ display:flex; gap:10px; margin-bottom:22px; }
+  .tab{
+    flex:1; padding:15px; border-radius:14px; border:none; font-weight:800; font-size:17px;
+    background: var(--ivory-dim); color:#6b6b73; cursor:pointer;
+  }
+  .tab.on{ background: var(--navy); color:#fff; }
+
+  .empty-state{ text-align:center; color:#8a8a90; margin-top:80px; font-size:17px; line-height:1.6; }
+  .empty-state .emoji{ font-size:52px; display:block; margin-bottom:12px; }
+
+  .board-list{ display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1; padding-right:2px; }
+  .board-row{
+    display:flex; align-items:center; gap:14px; background:#fff; border-radius:16px;
+    padding:14px 16px; border:2.5px solid #EFE9D8;
+  }
+  .rank-badge{
+    width:44px; height:44px; border-radius:50%; background:var(--ivory-dim); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; flex-shrink:0;
+  }
+  .board-row.rank1 .rank-badge{ background: var(--gold); color:#5a4400; }
+  .board-row.rank2 .rank-badge{ background: var(--silver); color:#3f4550; }
+  .board-row.rank3 .rank-badge{ background: var(--bronze); color:#4a2c11; }
+  .board-thumb{ width:58px; height:58px; border-radius:12px; object-fit:cover; flex-shrink:0; background:#eee; }
+  .board-thumb.placeholder{ display:flex; align-items:center; justify-content:center; font-size:24px; }
+  .board-info{ flex:1; min-width:0; }
+  .board-info .name{ font-weight:800; font-size:19px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .board-info .time{ font-size:16px; color:#8a8a90; font-variant-numeric: tabular-nums; }
+
+  .podium-wrap{ flex:1; display:flex; flex-direction:column; }
+  .podium-stage{ display:flex; align-items:flex-end; justify-content:center; gap:12px; flex:1; margin-top:14px; }
+  .pedestal-col{ display:flex; flex-direction:column; align-items:center; width:31%; }
+  .pod-avatar{
+    width:92px; height:92px; border-radius:50%; object-fit:cover; border:4px solid #fff;
+    box-shadow:0 4px 10px rgba(0,0,0,0.18); margin-bottom:10px; background:#eee;
+  }
+  .pod-avatar.placeholder{ display:flex; align-items:center; justify-content:center; font-size:36px; }
+  .pod-medal{ font-size:28px; margin-bottom:4px; }
+  .pod-name{ font-weight:800; font-size:18px; color:var(--ink); text-align:center; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pod-time{ font-size:15px; color:#8a8a90; margin-top:3px; font-variant-numeric: tabular-nums; }
+  .pedestal-block{
+    width:100%; border-radius:12px 12px 0 0; margin-top:12px;
+    display:flex; align-items:flex-start; justify-content:center; padding-top:10px;
+    color:#fff; font-weight:900; font-size:26px;
+  }
+  .p1 .pedestal-block{ height:150px; background: linear-gradient(180deg, var(--gold), #d9a72e); }
+  .p2 .pedestal-block{ height:106px; background: linear-gradient(180deg, var(--silver), #a7adb8); }
+  .p3 .pedestal-block{ height:78px; background: linear-gradient(180deg, var(--bronze), #a86b3e); }
+
+  .reset-link{ text-align:center; margin-top:18px; }
+  .reset-link button{ background:none; border:none; color:#b3454a; font-size:15px; cursor:pointer; text-decoration:underline; }
+
+  #photoInput{ display:none; }
+  .capture-btn{
+    position:absolute; bottom:10px; right:10px; background:rgba(22,33,62,0.85); color:#fff;
+    border:none; border-radius:10px; padding:8px 12px; font-size:12.5px; font-weight:700; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+  <div class="device">
+    <div class="device-header">
+      <div class="title-block">
+        <h1>🥢 젓가락 구체물 옮기기</h1>
+        <p>일상생활훈련 기록판</p>
+      </div>
+      <button class="icon-btn" id="trophyBtn" title="순위표 보기">🏆</button>
+    </div>
+
+    <!-- SETUP (외부 호스팅용 최초 1회 설정) -->
+    <div class="screen" id="screen-setup" style="align-items:center; text-align:center; justify-content:center;">
+      <div style="font-size:52px;">🛠️</div>
+      <p style="font-weight:800; font-size:20px; margin:10px 0 8px; color:var(--ink);">최초 1회 설정이 필요해요</p>
+      <p style="font-size:14.5px; color:#666; line-height:1.7; margin-bottom:20px; text-align:left;">
+        1. <a href="https://console.firebase.google.com" target="_blank">Firebase 콘솔</a>에서 새 프로젝트 만들기 (구글 계정만 있으면 무료)<br>
+        2. 왼쪽 메뉴 <b>빌드 → Realtime Database → 데이터베이스 만들기</b><br>
+        3. <b>테스트 모드</b>로 시작 (지역은 아무거나)<br>
+        4. 만들어진 후 <b>Rules</b> 탭에서 규칙을 아래처럼 바꾸고 게시(Publish):<br>
+        <code style="display:block; background:#eee; padding:8px; border-radius:8px; margin:6px 0; text-align:left; white-space:pre;">{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}</code>
+        5. Realtime Database 페이지 상단에 보이는 주소(<code style="background:#eee;padding:2px 6px;border-radius:6px;">https://xxxx-default-rtdb.xxxx.firebasedatabase.app</code> 형태)를 복사<br>
+        6. 코드 안의 <code style="background:#eee; padding:2px 6px; border-radius:6px;">FIREBASE_DB_URL = 'REPLACE_ME'</code> 부분의 <b>REPLACE_ME</b> 자리에 그 주소를 붙여넣고 저장 후 다시 올리기
+      </p>
+      <button class="primary-btn amber-btn" id="testConnectionBtn" style="margin-top:0; width:100%;">연결 확인하기</button>
+      <div id="setupError" style="color:var(--danger); font-size:14px; font-weight:600; margin-top:12px;"></div>
+    </div>
+
+    <!-- ENTRY -->
+    <div class="screen active" id="screen-entry">
+      <div class="chopstick-emoji">🥢</div>
+      <p class="lead">반과 이름을 입력하고 시작 버튼을 누르면<br>시간 측정이 시작돼요.</p>
+      <label class="field-label" for="classInput">반 이름</label>
+      <input type="text" id="classInput" placeholder="예: 3학년 2반" maxlength="14" style="margin-bottom:18px;">
+      <label class="field-label" for="nameInput">참가자 이름</label>
+      <input type="text" id="nameInput" placeholder="이름을 입력하세요" maxlength="12">
+      <div class="hint-error" id="nameError"></div>
+      <button class="primary-btn amber-btn" id="startBtn" style="margin-top:22px;">▶ 시작하기</button>
+      <button class="ghost-link" id="toBoardFromEntry">🏆 지금까지의 순위표 보기</button>
+    </div>
+
+    <!-- TIMING -->
+    <div class="screen timing-screen" id="screen-timing">
+      <div class="timing-name" id="timingName"></div>
+      <div class="timing-sub"><span class="pulse-dot"></span>측정 중이에요</div>
+      <div class="timer-display" id="timerDisplay">00:00.00</div>
+      <button class="stop-btn" id="stopBtn">종료</button>
+    </div>
+
+    <!-- RESULT -->
+    <div class="screen result-screen" id="screen-result">
+      <div class="confetti-wrap" id="confettiWrap"></div>
+      <div class="celebrate">🎉 짠!<span>수고했어요!</span></div>
+      <div class="result-time" id="resultTime">00:00.00</div>
+      <div class="photo-box" id="photoBox">
+        <div class="photo-placeholder"><span class="emoji">✌️📸</span>브이 하고 사진을 찍어주세요</div>
+        <button class="capture-btn" id="captureBtn">사진 찍기</button>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" capture="user">
+      <div class="row-btns">
+        <button class="secondary-outline" id="skipPhotoBtn">사진 없이 저장</button>
+        <button class="primary-btn" id="saveBtn" style="margin-top:0;">저장하고 순위 보기</button>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div class="screen" id="screen-board">
+      <div class="tabbar">
+        <button class="tab on" id="tabList">📋 개인 순위</button>
+        <button class="tab" id="tabClass">🏫 반별 순위</button>
+        <button class="tab" id="tabPodium">🏆 시상대</button>
+      </div>
+
+      <select id="classFilter" style="display:none; width:100%; padding:12px; border-radius:12px; border:2.5px solid #E4DECB; font-size:16px; font-weight:700; margin-bottom:14px; background:#fff; color:var(--ink);"></select>
+
+      <div id="boardListWrap" class="board-list"></div>
+
+      <div id="classBoardWrap" class="board-list" style="display:none;"></div>
+
+      <div id="podiumWrap" class="podium-wrap" style="display:none;"></div>
+
+      <button class="primary-btn amber-btn" id="nextParticipantBtn" style="margin-top:14px;">➕ 다음 참가자</button>
+      <div class="reset-link"><button id="resetBtn">전체 기록 초기화</button></div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal-card">
+        <p id="modalMessage"></p>
+        <div class="modal-actions">
+          <button class="modal-cancel" id="modalCancelBtn">취소</button>
+          <button class="modal-confirm" id="modalConfirmBtn">초기화</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'chopstick-training-records';
+  const SHARED = true;
+
+  // ⚙️ 외부(깃허브 등)에 올릴 때만 필요한 설정입니다.
+  // Firebase 콘솔에서 만든 Realtime Database 주소를 여기 따옴표 안에 붙여넣고 다시 올리세요.
+  // 예: 'https://my-project-default-rtdb.asia-southeast1.firebasedatabase.app'
+  const FIREBASE_DB_URL = 'REPLACE_ME';
+
+  const USE_ARTIFACT_STORAGE = (typeof window.storage !== 'undefined');
+  const NEEDS_SETUP = (!USE_ARTIFACT_STORAGE && (!FIREBASE_DB_URL || FIREBASE_DB_URL === 'REPLACE_ME'));
+
+  let records = [];
+  let currentName = '';
+  let currentClass = '';
+  let startPerf = 0;
+  let elapsedMs = 0;
+  let rafId = null;
+  let capturedPhoto = null;
+  let boardTab = 'list';
+  let mediaStream = null;
+
+  const $ = (id) => document.getElementById(id);
+  const body = document.body;
+
+  function showScreen(id){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    $(id).classList.add('active');
+    body.classList.toggle('timing-mode', id === 'screen-timing');
+  }
+
+  function formatTime(ms){
+    const totalCs = Math.floor(ms / 10);
+    const cs = totalCs % 100;
+    const totalSec = Math.floor(totalCs / 100);
+    const sec = totalSec % 60;
+    const min = Math.floor(totalSec / 60);
+    const pad = (n, l=2) => String(n).padStart(l, '0');
+    return `${pad(min)}:${pad(sec)}.${pad(cs)}`;
+  }
+
+  function dbUrl(){
+    return FIREBASE_DB_URL.replace(/\/$/, '') + '/' + STORAGE_KEY + '.json';
+  }
+
+  async function fbGet(){
+    const res = await fetch(dbUrl());
+    if(!res.ok) throw new Error('firebase get failed: ' + res.status);
+    return await res.json();
+  }
+
+  async function fbSet(value){
+    const res = await fetch(dbUrl(), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(value)
+    });
+    if(!res.ok) throw new Error('firebase set failed: ' + res.status);
+  }
+
+  async function loadRecords(){
+    try{
+      if(USE_ARTIFACT_STORAGE){
+        const res = await window.storage.get(STORAGE_KEY, SHARED);
+        records = res && res.value ? JSON.parse(res.value) : [];
+      } else {
+        const data = await fbGet();
+        records = data || [];
+      }
+    }catch(e){
+      console.error('불러오기 실패', e);
+      records = [];
+    }
+  }
+
+  async function saveRecords(){
+    try{
+      if(USE_ARTIFACT_STORAGE){
+        await window.storage.set(STORAGE_KEY, JSON.stringify(records), SHARED);
+      } else {
+        await fbSet(records);
+      }
+    }catch(e){
+      console.error('저장 실패', e);
+    }
+  }
+
+  // ---------- ENTRY ----------
+  function resetEntry(){
+    currentName = '';
+    currentClass = '';
+    elapsedMs = 0;
+    capturedPhoto = null;
+    $('classInput').value = '';
+    $('nameInput').value = '';
+    $('nameError').textContent = '';
+    $('startBtn').disabled = false;
+    resetPhotoBox();
+    showScreen('screen-entry');
+    setTimeout(() => $('classInput').focus(), 150);
+  }
+
+  $('nameInput').addEventListener('input', () => {
+    $('nameError').textContent = '';
+  });
+  $('classInput').addEventListener('input', () => {
+    $('nameError').textContent = '';
+  });
+
+  $('startBtn').addEventListener('click', () => {
+    const cls = $('classInput').value.trim();
+    const name = $('nameInput').value.trim();
+    if(!cls){
+      $('nameError').textContent = '반 이름을 먼저 입력해주세요.';
+      $('classInput').focus();
+      return;
+    }
+    if(!name){
+      $('nameError').textContent = '이름을 먼저 입력해주세요.';
+      $('nameInput').focus();
+      return;
+    }
+    currentClass = cls;
+    currentName = name;
+    startTiming();
+  });
+
+  $('toBoardFromEntry').addEventListener('click', () => openBoard('list'));
+  $('trophyBtn').addEventListener('click', () => openBoard('list'));
+
+  // ---------- TIMING ----------
+  function startTiming(){
+    $('timingName').textContent = currentClass + ' · ' + currentName + ' 님';
+    showScreen('screen-timing');
+    startPerf = performance.now();
+    tick();
+  }
+
+  function tick(){
+    const now = performance.now() - startPerf;
+    $('timerDisplay').textContent = formatTime(now);
+    rafId = requestAnimationFrame(tick);
+  }
+
+  $('stopBtn').addEventListener('click', () => {
+    cancelAnimationFrame(rafId);
+    elapsedMs = performance.now() - startPerf;
+    showResult();
+  });
+
+  // ---------- RESULT ----------
+  function showResult(){
+    $('resultTime').textContent = formatTime(elapsedMs);
+    resetPhotoBox();
+    showScreen('screen-result');
+    fireConfetti();
+  }
+
+  function fireConfetti(){
+    const wrap = $('confettiWrap');
+    wrap.innerHTML = '';
+    const colors = ['#F5A623', '#2EC4B6', '#F2C14E', '#16213E', '#E0575B'];
+    for(let i=0;i<18;i++){
+      const d = document.createElement('div');
+      d.className = 'confetti';
+      d.style.left = (Math.random()*100) + '%';
+      d.style.background = colors[i % colors.length];
+      d.style.animationDelay = (Math.random()*0.3) + 's';
+      d.style.transform = `rotate(${Math.random()*360}deg)`;
+      wrap.appendChild(d);
+    }
+    setTimeout(() => { wrap.innerHTML = ''; }, 1800);
+  }
+
+  function stopStream(){
+    if(mediaStream){
+      mediaStream.getTracks().forEach(t => t.stop());
+      mediaStream = null;
+    }
+  }
+
+  function resetPhotoBox(){
+    stopStream();
+    capturedPhoto = null;
+    $('photoBox').innerHTML = `
+      <div class="photo-placeholder"><span class="emoji">✌️📸</span>브이 하고 사진을 찍어주세요</div>
+      <button class="capture-btn" id="captureBtn">사진 찍기</button>
+    `;
+    $('captureBtn').addEventListener('click', openCamera);
+    $('photoInput').value = '';
+  }
+
+  function openCamera(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      $('photoInput').click();
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+      .then((stream) => {
+        mediaStream = stream;
+        $('photoBox').innerHTML = `
+          <video id="camVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
+          <button class="capture-btn" id="shutterBtn">📸 촬영</button>
+        `;
+        const video = $('camVideo');
+        video.srcObject = stream;
+        $('shutterBtn').addEventListener('click', capturePhotoFromVideo);
+      })
+      .catch((err) => {
+        console.warn('웹캠을 사용할 수 없어 파일 선택으로 대체합니다:', err);
+        $('photoInput').click();
+      });
+  }
+
+  function capturePhotoFromVideo(){
+    const video = $('camVideo');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    stopStream();
+    capturedPhoto = dataUrl;
+    $('photoBox').innerHTML = `<img src="${dataUrl}" alt="참가자 사진">
+      <button class="capture-btn" id="captureBtn">다시 찍기</button>`;
+    $('captureBtn').addEventListener('click', openCamera);
+  }
+
+  $('photoInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      capturedPhoto = ev.target.result;
+      $('photoBox').innerHTML = `<img src="${capturedPhoto}" alt="참가자 사진">
+        <button class="capture-btn" id="captureBtn">다시 찍기</button>`;
+      $('captureBtn').addEventListener('click', openCamera);
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $('skipPhotoBtn').addEventListener('click', () => { stopStream(); capturedPhoto = null; saveRecord(); });
+  $('saveBtn').addEventListener('click', () => { stopStream(); saveRecord(); });
+
+  async function saveRecord(){
+    records.push({
+      id: Date.now() + '-' + Math.random().toString(36).slice(2,7),
+      className: currentClass,
+      name: currentName,
+      timeMs: elapsedMs,
+      photo: capturedPhoto,
+      savedAt: Date.now()
+    });
+    await saveRecords();
+    openBoard('list');
+  }
+
+  // ---------- LEADERBOARD ----------
+  function sortedRecords(list){
+    return [...(list || records)].sort((a,b) => a.timeMs - b.timeMs);
+  }
+
+  function uniqueClasses(){
+    return [...new Set(records.map(r => r.className || '미지정'))];
+  }
+
+  function currentFilterClass(){
+    return $('classFilter').value || 'all';
+  }
+
+  function filteredRecords(){
+    const f = currentFilterClass();
+    if(f === 'all') return records;
+    return records.filter(r => (r.className || '미지정') === f);
+  }
+
+  function populateClassFilter(){
+    const prev = $('classFilter').value;
+    const classes = uniqueClasses();
+    $('classFilter').innerHTML = '<option value="all">전체 반</option>' +
+      classes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    if(classes.includes(prev)) $('classFilter').value = prev;
+  }
+
+  function openBoard(tab){
+    stopStream();
+    boardTab = tab || 'list';
+    renderBoard();
+    showScreen('screen-board');
+  }
+
+  $('tabList').addEventListener('click', () => { boardTab='list'; renderBoard(); });
+  $('tabClass').addEventListener('click', () => { boardTab='class'; renderBoard(); });
+  $('tabPodium').addEventListener('click', () => { boardTab='podium'; renderBoard(); });
+  $('classFilter').addEventListener('change', renderBoard);
+  $('nextParticipantBtn').addEventListener('click', resetEntry);
+
+  function showConfirm(message, onConfirm){
+    $('modalMessage').textContent = message;
+    $('modalOverlay').classList.add('show');
+    const confirmBtn = $('modalConfirmBtn');
+    const cancelBtn = $('modalCancelBtn');
+    function cleanup(){
+      $('modalOverlay').classList.remove('show');
+      confirmBtn.removeEventListener('click', onConfirmClick);
+      cancelBtn.removeEventListener('click', onCancelClick);
+    }
+    function onConfirmClick(){ cleanup(); onConfirm(); }
+    function onCancelClick(){ cleanup(); }
+    confirmBtn.addEventListener('click', onConfirmClick);
+    cancelBtn.addEventListener('click', onCancelClick);
+  }
+
+  $('resetBtn').addEventListener('click', () => {
+    showConfirm('모든 기록을 초기화할까요? 되돌릴 수 없어요.', async () => {
+      records = [];
+      await saveRecords();
+      renderBoard();
+    });
+  });
+
+  function renderBoard(){
+    $('tabList').classList.toggle('on', boardTab === 'list');
+    $('tabClass').classList.toggle('on', boardTab === 'class');
+    $('tabPodium').classList.toggle('on', boardTab === 'podium');
+
+    $('boardListWrap').style.display = boardTab === 'list' ? 'flex' : 'none';
+    $('classBoardWrap').style.display = boardTab === 'class' ? 'flex' : 'none';
+    $('podiumWrap').style.display = boardTab === 'podium' ? 'flex' : 'none';
+    $('classFilter').style.display = (boardTab === 'list' || boardTab === 'podium') ? 'block' : 'none';
+
+    populateClassFilter();
+
+    if(boardTab === 'list') renderList();
+    else if(boardTab === 'class') renderClassBoard();
+    else renderPodium();
+  }
+
+  function medalFor(rank){
+    if(rank === 1) return '🥇';
+    if(rank === 2) return '🥈';
+    if(rank === 3) return '🥉';
+    return '';
+  }
+
+  function renderList(){
+    const wrap = $('boardListWrap');
+    const list = sortedRecords(filteredRecords());
+    if(list.length === 0){
+      wrap.innerHTML = `<div class="empty-state"><span class="emoji">🥢</span>아직 기록이 없어요.<br>측정을 시작해보세요!</div>`;
+      return;
+    }
+    wrap.innerHTML = list.map((r, i) => {
+      const rank = i + 1;
+      const rankClass = rank <= 3 ? 'rank' + rank : '';
+      const thumb = r.photo
+        ? `<img class="board-thumb" src="${r.photo}" alt="${r.name}">`
+        : `<div class="board-thumb placeholder">🥢</div>`;
+      return `
+        <div class="board-row ${rankClass}">
+          <div class="rank-badge">${medalFor(rank) || rank}</div>
+          ${thumb}
+          <div class="board-info">
+            <div class="name">${escapeHtml(r.name)} <span style="font-weight:600;color:#a3a3aa;font-size:14px;">· ${escapeHtml(r.className || '미지정')}</span></div>
+            <div class="time">${formatTime(r.timeMs)}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderClassBoard(){
+    const wrap = $('classBoardWrap');
+    const classes = uniqueClasses();
+    if(classes.length === 0){
+      wrap.innerHTML = `<div class="empty-state"><span class="emoji">🏫</span>아직 기록이 없어요.<br>측정을 시작해보세요!</div>`;
+      return;
+    }
+    const summary = classes.map(cls => {
+      const members = records.filter(r => (r.className || '미지정') === cls);
+      const avg = members.reduce((sum, r) => sum + r.timeMs, 0) / members.length;
+      const best = Math.min(...members.map(r => r.timeMs));
+      return { cls, count: members.length, avg, best };
+    }).sort((a,b) => a.avg - b.avg);
+
+    wrap.innerHTML = summary.map((s, i) => {
+      const rank = i + 1;
+      const rankClass = rank <= 3 ? 'rank' + rank : '';
+      return `
+        <div class="board-row ${rankClass}">
+          <div class="rank-badge">${medalFor(rank) || rank}</div>
+          <div class="board-info">
+            <div class="name">${escapeHtml(s.cls)} <span style="font-weight:600;color:#a3a3aa;font-size:14px;">(${s.count}명)</span></div>
+            <div class="time">반 평균 ${formatTime(s.avg)} · 최고 기록 ${formatTime(s.best)}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderPodium(){
+    const wrap = $('podiumWrap');
+    const top3 = sortedRecords(filteredRecords()).slice(0,3);
+    if(top3.length === 0){
+      wrap.innerHTML = `<div class="empty-state"><span class="emoji">🏆</span>기록이 쌓이면<br>시상대가 채워져요.</div>`;
+      return;
+    }
+    const order = [top3[1], top3[0], top3[2]]; // 2등, 1등, 3등 순서로 배치
+    const cols = order.map((r, idx) => {
+      if(!r) return `<div class="pedestal-col p${idx===1?1:(idx===0?2:3)}"></div>`;
+      const rank = top3.indexOf(r) + 1;
+      const avatar = r.photo
+        ? `<img class="pod-avatar" src="${r.photo}" alt="${r.name}">`
+        : `<div class="pod-avatar placeholder">🥢</div>`;
+      const pClass = rank === 1 ? 'p1' : (rank === 2 ? 'p2' : 'p3');
+      return `
+        <div class="pedestal-col ${pClass}">
+          <div class="pod-medal">${medalFor(rank)}</div>
+          ${avatar}
+          <div class="pod-name">${escapeHtml(r.name)}</div>
+          <div class="pod-time" style="margin-top:-2px;">${escapeHtml(r.className || '미지정')}</div>
+          <div class="pod-time">${formatTime(r.timeMs)}</div>
+          <div class="pedestal-block">${rank}</div>
+        </div>`;
+    }).join('');
+    wrap.innerHTML = `<div class="podium-stage">${cols}</div>`;
+  }
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  $('testConnectionBtn').addEventListener('click', async () => {
+    $('setupError').textContent = '';
+    if(!FIREBASE_DB_URL || FIREBASE_DB_URL === 'REPLACE_ME'){
+      $('setupError').textContent = '아직 코드에 Firebase 주소를 넣지 않으셨어요. 위 5~6번 단계를 먼저 해주세요.';
+      return;
+    }
+    $('testConnectionBtn').disabled = true;
+    $('testConnectionBtn').textContent = '확인 중...';
+    try{
+      await fbGet();
+      await loadRecords();
+      resetPhotoBox();
+      showScreen('screen-entry');
+    }catch(e){
+      $('setupError').textContent = '연결에 실패했어요. 주소가 정확한지, Rules가 저장됐는지 확인해주세요.';
+      $('testConnectionBtn').disabled = false;
+      $('testConnectionBtn').textContent = '연결 확인하기';
+    }
+  });
+
+  // ---------- INIT ----------
+  (async function init(){
+    if(NEEDS_SETUP){
+      showScreen('screen-setup');
+      return;
+    }
+    await loadRecords();
+    resetPhotoBox();
+    showScreen('screen-entry');
+  })();
+})();
+</script>
+</body>
+</html>
