@@ -343,7 +343,7 @@
   // ⚙️ 외부(깃허브 등)에 올릴 때만 필요한 설정입니다.
   // Firebase 콘솔에서 만든 Realtime Database 주소를 여기 따옴표 안에 붙여넣고 다시 올리세요.
   // 예: 'https://my-project-default-rtdb.asia-southeast1.firebasedatabase.app'
-  const FIREBASE_DB_URL = 'REPLACE_ME';
+  const FIREBASE_DB_URL = 'https://didimdol-1d4f3-default-rtdb.firebaseio.com';
 
   const USE_ARTIFACT_STORAGE = (typeof window.storage !== 'undefined');
   const NEEDS_SETUP = (!USE_ARTIFACT_STORAGE && (!FIREBASE_DB_URL || FIREBASE_DB_URL === 'REPLACE_ME'));
@@ -705,8 +705,22 @@
             <div class="name">${escapeHtml(r.name)} <span style="font-weight:600;color:#a3a3aa;font-size:14px;">· ${escapeHtml(r.className || '미지정')}</span></div>
             <div class="time">${formatTime(r.timeMs)}</div>
           </div>
+          <button class="record-reset-btn" data-id="${escapeHtml(r.id)}" style="background:none;border:none;color:#b3454a;font-size:13px;text-decoration:underline;cursor:pointer;flex-shrink:0;padding:4px;">삭제</button>
         </div>`;
     }).join('');
+
+    wrap.querySelectorAll('.record-reset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const target = records.find(r => r.id === id);
+        const label = target ? `${target.name}(${target.className || '미지정'})님의` : '이';
+        showConfirm(`${label} 기록을 삭제할까요? 되돌릴 수 없어요.`, async () => {
+          records = records.filter(r => r.id !== id);
+          await saveRecords();
+          renderBoard();
+        });
+      });
+    });
   }
 
   function renderClassBoard(){
