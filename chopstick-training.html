@@ -143,6 +143,9 @@
     box-shadow: 0 8px 0 #a83d40; cursor:pointer;
   }
   .stop-btn:active{ transform: translateY(4px); box-shadow: 0 2px 0 #a83d40; }
+  .go-btn{ background: var(--teal); box-shadow: 0 8px 0 var(--teal-dark); font-size:26px; }
+  .go-btn:active{ box-shadow: 0 2px 0 var(--teal-dark); }
+  .timer-display.ready{ color:#5c6687; }
 
   /* ---------- RESULT ---------- */
   .result-screen{ align-items:center; text-align:center; }
@@ -228,6 +231,44 @@
   .reset-link{ text-align:center; margin-top:18px; }
   .reset-link button{ background:none; border:none; color:#b3454a; font-size:15px; cursor:pointer; text-decoration:underline; }
 
+  /* ---------- TRACK ---------- */
+  .track-pick{ display:flex; gap:12px; margin-bottom:26px; }
+  .track-card{
+    flex:1; background:#fff; border:3px solid #E4DECB; border-radius:18px;
+    padding:18px 10px 16px; cursor:pointer; text-align:center; color:var(--ink);
+    font-family:inherit; transition: transform 0.08s ease;
+  }
+  .track-card:active{ transform: scale(0.97); }
+  .track-card .t-emoji{ font-size:40px; display:block; margin-bottom:6px; }
+  .track-card .t-name{ font-size:19px; font-weight:800; display:block; }
+  .track-card .t-sub{ font-size:14px; color:#8a8a90; font-weight:600; display:block; margin-top:3px; }
+  .track-card.on{ border-color: var(--teal); background:#E6F7F5; box-shadow: 0 0 0 3px rgba(46,196,182,0.25); }
+  .track-card.on.tong{ border-color: var(--amber); background:#FFF3DE; box-shadow: 0 0 0 3px rgba(245,166,35,0.25); }
+  .track-badge{
+    display:inline-block; padding:6px 14px; border-radius:999px; font-size:15px; font-weight:800;
+    background:#E6F7F5; color:var(--teal-dark); margin-bottom:12px;
+  }
+  .track-badge.tong{ background:#FFF3DE; color:var(--amber-dark); }
+  body.timing-mode .track-badge{ background: rgba(46,196,182,0.18); color: var(--teal); }
+  body.timing-mode .track-badge.tong{ background: rgba(245,166,35,0.18); color: var(--amber); }
+  .track-switch{ display:flex; background:var(--ivory-dim); border-radius:16px; padding:5px; gap:5px; margin-bottom:14px; }
+  .track-switch button{
+    flex:1; padding:13px 8px; border:none; border-radius:12px; font-size:16px; font-weight:800;
+    background:transparent; color:#6b6b73; cursor:pointer; font-family:inherit;
+  }
+  .track-switch button.on{ background:var(--teal); color:#fff; }
+  .track-switch button.on.tong{ background:var(--amber); color:#fff; }
+
+  /* ---------- CLASS PICKER ---------- */
+  .pick-row{ display:flex; gap:10px; margin-bottom:10px; }
+  .pick-row:last-of-type{ margin-bottom:18px; }
+  .pick-btn{
+    flex:1; padding:16px 6px; border-radius:14px; border:3px solid #E4DECB; background:#fff;
+    font-size:20px; font-weight:800; color:var(--ink); cursor:pointer; font-family:inherit;
+  }
+  .pick-btn.on{ background:var(--navy); border-color:var(--navy); color:#fff; }
+  .pick-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+
   #photoInput{ display:none; }
   .capture-btn{
     position:absolute; bottom:10px; right:10px; background:rgba(22,33,62,0.85); color:#fff;
@@ -270,22 +311,50 @@
     <!-- ENTRY -->
     <div class="screen active" id="screen-entry">
       <div class="chopstick-emoji">🥢</div>
-      <p class="lead">반과 이름을 입력하고 시작 버튼을 누르면<br>시간 측정이 시작돼요.</p>
-      <label class="field-label" for="classInput">반 이름</label>
-      <input type="text" id="classInput" placeholder="예: 3학년 2반" maxlength="14" style="margin-bottom:18px;">
+      <p class="lead">종목과 반을 고르고 이름을 입력한 뒤<br>다음 버튼을 눌러 측정 화면으로 가요.</p>
+      <label class="field-label">종목 선택</label>
+      <div class="track-pick">
+        <button type="button" class="track-card tong" data-track="tong">
+          <span class="t-emoji">🦀</span>
+          <span class="t-name">교정용 젓가락</span>
+          <span class="t-sub">(집게)</span>
+        </button>
+        <button type="button" class="track-card" data-track="normal">
+          <span class="t-emoji">🥢</span>
+          <span class="t-name">일반 젓가락</span>
+          <span class="t-sub">&nbsp;</span>
+        </button>
+      </div>
+      <label class="field-label">학교 · 학년 · 반</label>
+      <div class="pick-row" id="pickSchool">
+        <button type="button" class="pick-btn" data-v="중">중학교</button>
+        <button type="button" class="pick-btn" data-v="고">고등학교</button>
+      </div>
+      <div class="pick-row" id="pickGrade">
+        <button type="button" class="pick-btn" data-v="1">1학년</button>
+        <button type="button" class="pick-btn" data-v="2">2학년</button>
+        <button type="button" class="pick-btn" data-v="3">3학년</button>
+      </div>
+      <div class="pick-row" id="pickClass" style="margin-bottom:20px;">
+        <button type="button" class="pick-btn" data-v="1">1반</button>
+        <button type="button" class="pick-btn" data-v="2">2반</button>
+      </div>
       <label class="field-label" for="nameInput">참가자 이름</label>
       <input type="text" id="nameInput" placeholder="이름을 입력하세요" maxlength="12">
       <div class="hint-error" id="nameError"></div>
-      <button class="primary-btn amber-btn" id="startBtn" style="margin-top:22px;">▶ 시작하기</button>
+      <button class="primary-btn amber-btn" id="startBtn" style="margin-top:22px;">다음 ▶</button>
       <button class="ghost-link" id="toBoardFromEntry">🏆 지금까지의 순위표 보기</button>
     </div>
 
     <!-- TIMING -->
     <div class="screen timing-screen" id="screen-timing">
+      <div class="track-badge" id="timingTrack"></div>
       <div class="timing-name" id="timingName"></div>
-      <div class="timing-sub"><span class="pulse-dot"></span>측정 중이에요</div>
+      <div class="timing-sub" id="timingSub"></div>
       <div class="timer-display" id="timerDisplay">00:00.00</div>
-      <button class="stop-btn" id="stopBtn">종료</button>
+      <button class="stop-btn go-btn" id="goBtn">시작</button>
+      <button class="stop-btn" id="stopBtn" style="display:none;">종료</button>
+      <button class="ghost-link" id="backToEntryBtn" style="margin-top:30px;">← 이름·반 다시 고르기</button>
     </div>
 
     <!-- RESULT -->
@@ -293,19 +362,17 @@
       <div class="confetti-wrap" id="confettiWrap"></div>
       <div class="celebrate">🎉 짠!<span>수고했어요!</span></div>
       <div class="result-time" id="resultTime">00:00.00</div>
-      <div class="photo-box" id="photoBox">
-        <div class="photo-placeholder"><span class="emoji">✌️📸</span>브이 하고 사진을 찍어주세요</div>
-        <button class="capture-btn" id="captureBtn">사진 찍기</button>
-      </div>
-      <input type="file" id="photoInput" accept="image/*" capture="user">
-      <div class="row-btns">
-        <button class="secondary-outline" id="skipPhotoBtn">사진 없이 저장</button>
-        <button class="primary-btn" id="saveBtn" style="margin-top:0;">저장하고 순위 보기</button>
-      </div>
+      <div class="track-badge" id="resultTrack" style="margin-top:-18px; margin-bottom:22px;"></div>
+      <button class="primary-btn" id="saveBtn" style="width:100%; margin-top:12px;">저장하고 순위 보기</button>
+    </div>
     </div>
 
     <!-- LEADERBOARD -->
     <div class="screen" id="screen-board">
+      <div class="track-switch">
+        <button class="tong" id="boardTrackTong">🦀 교정용 젓가락(집게)</button>
+        <button id="boardTrackNormal">🥢 일반 젓가락</button>
+      </div>
       <div class="tabbar">
         <button class="tab on" id="tabList">📋 개인 순위</button>
         <button class="tab" id="tabClass">🏫 반별 순위</button>
@@ -321,7 +388,7 @@
       <div id="podiumWrap" class="podium-wrap" style="display:none;"></div>
 
       <button class="primary-btn amber-btn" id="nextParticipantBtn" style="margin-top:14px;">➕ 다음 참가자</button>
-      <div class="reset-link"><button id="resetBtn">전체 기록 초기화</button></div>
+      <div class="reset-link"><button id="resetBtn">이 종목 기록 초기화</button></div>
     </div>
 
     <div class="modal-overlay" id="modalOverlay">
@@ -357,6 +424,16 @@
   let capturedPhoto = null;
   let boardTab = 'list';
   let mediaStream = null;
+  let currentTrack = '';      // 입력 화면에서 고른 종목
+  let boardTrack = 'tong';    // 순위표에서 보고 있는 종목
+
+  const TRACKS = {
+    tong:   { label: '교정용 젓가락(집게)', emoji: '🦀' },
+    normal: { label: '일반 젓가락',         emoji: '🥢' }
+  };
+  // 예전(트랙 구분 전) 기록은 일반 젓가락으로 취급
+  const trackOf = (r) => (r.track === 'tong' ? 'tong' : 'normal');
+  const trackRecords = (t) => records.filter(r => trackOf(r) === t);
 
   const $ = (id) => document.getElementById(id);
   const body = document.body;
@@ -429,28 +506,63 @@
     currentClass = '';
     elapsedMs = 0;
     capturedPhoto = null;
-    $('classInput').value = '';
     $('nameInput').value = '';
     $('nameError').textContent = '';
     $('startBtn').disabled = false;
+    setEntryTrack(currentTrack); // 직전 종목은 그대로 유지 (같은 종목 연속 측정 편하게)
     resetPhotoBox();
     showScreen('screen-entry');
-    setTimeout(() => $('classInput').focus(), 150);
+    setTimeout(() => $('nameInput').focus(), 150);
+  }
+
+  function setEntryTrack(t){
+    currentTrack = t || '';
+    document.querySelectorAll('.track-card').forEach(c => {
+      c.classList.toggle('on', c.dataset.track === currentTrack);
+    });
+  }
+  document.querySelectorAll('.track-card').forEach(c => {
+    c.addEventListener('click', () => {
+      setEntryTrack(c.dataset.track);
+      $('nameError').textContent = '';
+    });
+  });
+
+  function paintBadge(el, t){
+    el.textContent = TRACKS[t].emoji + ' ' + TRACKS[t].label;
+    el.classList.toggle('tong', t === 'tong');
   }
 
   $('nameInput').addEventListener('input', () => {
     $('nameError').textContent = '';
   });
-  $('classInput').addEventListener('input', () => {
-    $('nameError').textContent = '';
-  });
+  // 학교/학년/반 선택 (다음 참가자로 넘어가도 선택은 유지)
+  const pick = { school:'', grade:'', cls:'' };
+  function bindPick(rowId, key){
+    $(rowId).querySelectorAll('.pick-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        pick[key] = b.dataset.v;
+        $(rowId).querySelectorAll('.pick-btn').forEach(x => x.classList.toggle('on', x === b));
+        $('nameError').textContent = '';
+      });
+    });
+  }
+  bindPick('pickSchool','school');
+  bindPick('pickGrade','grade');
+  bindPick('pickClass','cls');
+  // 저장되는 반 이름 예: "중1-2반", "고3-1반"
+  const pickedClassName = () => `${pick.school}${pick.grade}-${pick.cls}반`;
 
   $('startBtn').addEventListener('click', () => {
-    const cls = $('classInput').value.trim();
+    const cls = (pick.school && pick.grade && pick.cls) ? pickedClassName() : '';
     const name = $('nameInput').value.trim();
+    if(!currentTrack){
+      $('nameError').textContent = '종목(교정용 젓가락 / 일반 젓가락)을 먼저 골라주세요.';
+      return;
+    }
     if(!cls){
-      $('nameError').textContent = '반 이름을 먼저 입력해주세요.';
-      $('classInput').focus();
+      const miss = !pick.school ? '중학교/고등학교' : (!pick.grade ? '학년' : '반');
+      $('nameError').textContent = miss + '을(를) 먼저 골라주세요.';
       return;
     }
     if(!name){
@@ -460,19 +572,38 @@
     }
     currentClass = cls;
     currentName = name;
-    startTiming();
+    prepareTiming();
   });
 
-  $('toBoardFromEntry').addEventListener('click', () => openBoard('list'));
-  $('trophyBtn').addEventListener('click', () => openBoard('list'));
+  $('toBoardFromEntry').addEventListener('click', () => openBoard('list', currentTrack));
+  $('trophyBtn').addEventListener('click', () => openBoard('list', currentTrack));
 
   // ---------- TIMING ----------
-  function startTiming(){
+  // 측정 화면: 선생님이 [시작]을 눌러야 시간이 흐름
+  function prepareTiming(){
+    paintBadge($('timingTrack'), currentTrack);
     $('timingName').textContent = currentClass + ' · ' + currentName + ' 님';
+    $('timingSub').innerHTML = '준비되면 시작 버튼을 눌러주세요';
+    $('timerDisplay').textContent = formatTime(0);
+    $('timerDisplay').classList.add('ready');
+    $('goBtn').style.display = '';
+    $('stopBtn').style.display = 'none';
+    $('backToEntryBtn').style.display = '';
     showScreen('screen-timing');
+  }
+
+  function startTiming(){
+    $('timingSub').innerHTML = '<span class="pulse-dot"></span>측정 중이에요';
+    $('timerDisplay').classList.remove('ready');
+    $('goBtn').style.display = 'none';
+    $('stopBtn').style.display = '';
+    $('backToEntryBtn').style.display = 'none';
     startPerf = performance.now();
     tick();
   }
+
+  $('goBtn').addEventListener('click', startTiming);
+  $('backToEntryBtn').addEventListener('click', () => showScreen('screen-entry'));
 
   function tick(){
     const now = performance.now() - startPerf;
@@ -489,6 +620,7 @@
   // ---------- RESULT ----------
   function showResult(){
     $('resultTime').textContent = formatTime(elapsedMs);
+    paintBadge($('resultTrack'), currentTrack);
     resetPhotoBox();
     showScreen('screen-result');
     fireConfetti();
@@ -517,75 +649,15 @@
     }
   }
 
-  function resetPhotoBox(){
-    stopStream();
-    capturedPhoto = null;
-    $('photoBox').innerHTML = `
-      <div class="photo-placeholder"><span class="emoji">✌️📸</span>브이 하고 사진을 찍어주세요</div>
-      <button class="capture-btn" id="captureBtn">사진 찍기</button>
-    `;
-    $('captureBtn').addEventListener('click', openCamera);
-    $('photoInput').value = '';
-  }
+  // 사진 촬영 기능은 사용하지 않음 (예전 기록의 사진은 순위표에 그대로 표시)
+  function resetPhotoBox(){ capturedPhoto = null; }
 
-  function openCamera(){
-    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-      $('photoInput').click();
-      return;
-    }
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
-      .then((stream) => {
-        mediaStream = stream;
-        $('photoBox').innerHTML = `
-          <video id="camVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
-          <button class="capture-btn" id="shutterBtn">📸 촬영</button>
-        `;
-        const video = $('camVideo');
-        video.srcObject = stream;
-        $('shutterBtn').addEventListener('click', capturePhotoFromVideo);
-      })
-      .catch((err) => {
-        console.warn('웹캠을 사용할 수 없어 파일 선택으로 대체합니다:', err);
-        $('photoInput').click();
-      });
-  }
-
-  function capturePhotoFromVideo(){
-    const video = $('camVideo');
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-    stopStream();
-    capturedPhoto = dataUrl;
-    $('photoBox').innerHTML = `<img src="${dataUrl}" alt="참가자 사진">
-      <button class="capture-btn" id="captureBtn">다시 찍기</button>`;
-    $('captureBtn').addEventListener('click', openCamera);
-  }
-
-  $('photoInput').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      capturedPhoto = ev.target.result;
-      $('photoBox').innerHTML = `<img src="${capturedPhoto}" alt="참가자 사진">
-        <button class="capture-btn" id="captureBtn">다시 찍기</button>`;
-      $('captureBtn').addEventListener('click', openCamera);
-    };
-    reader.readAsDataURL(file);
-  });
-
-  $('skipPhotoBtn').addEventListener('click', () => { stopStream(); capturedPhoto = null; saveRecord(); });
-  $('saveBtn').addEventListener('click', () => { stopStream(); saveRecord(); });
+  $('saveBtn').addEventListener('click', () => { $('saveBtn').disabled = true; saveRecord().finally(() => { $('saveBtn').disabled = false; }); });
 
   async function saveRecord(){
     records.push({
       id: Date.now() + '-' + Math.random().toString(36).slice(2,7),
+      track: currentTrack,
       className: currentClass,
       name: currentName,
       timeMs: elapsedMs,
@@ -593,16 +665,21 @@
       savedAt: Date.now()
     });
     await saveRecords();
-    openBoard('list');
+    openBoard('list', currentTrack);
   }
 
   // ---------- LEADERBOARD ----------
   function sortedRecords(list){
-    return [...(list || records)].sort((a,b) => a.timeMs - b.timeMs);
+    return [...(list || trackRecords(boardTrack))].sort((a,b) => a.timeMs - b.timeMs);
   }
 
   function uniqueClasses(){
-    return [...new Set(records.map(r => r.className || '미지정'))];
+    const order = (c) => {
+      const m = /^([중고])(\d)-(\d)반$/.exec(c);
+      return m ? (m[1]==='중'?0:100) + Number(m[2])*10 + Number(m[3]) : 1000;
+    };
+    return [...new Set(trackRecords(boardTrack).map(r => r.className || '미지정'))]
+      .sort((a,b) => order(a) - order(b) || a.localeCompare(b));
   }
 
   function currentFilterClass(){
@@ -611,8 +688,9 @@
 
   function filteredRecords(){
     const f = currentFilterClass();
-    if(f === 'all') return records;
-    return records.filter(r => (r.className || '미지정') === f);
+    const list = trackRecords(boardTrack);
+    if(f === 'all') return list;
+    return list.filter(r => (r.className || '미지정') === f);
   }
 
   function populateClassFilter(){
@@ -623,9 +701,10 @@
     if(classes.includes(prev)) $('classFilter').value = prev;
   }
 
-  function openBoard(tab){
+  function openBoard(tab, track){
     stopStream();
     boardTab = tab || 'list';
+    if(track) boardTrack = track;
     renderBoard();
     showScreen('screen-board');
   }
@@ -634,6 +713,8 @@
   $('tabClass').addEventListener('click', () => { boardTab='class'; renderBoard(); });
   $('tabPodium').addEventListener('click', () => { boardTab='podium'; renderBoard(); });
   $('classFilter').addEventListener('change', renderBoard);
+  $('boardTrackTong').addEventListener('click', () => { boardTrack='tong'; renderBoard(); });
+  $('boardTrackNormal').addEventListener('click', () => { boardTrack='normal'; renderBoard(); });
   $('nextParticipantBtn').addEventListener('click', resetEntry);
 
   function showConfirm(message, onConfirm){
@@ -653,14 +734,16 @@
   }
 
   $('resetBtn').addEventListener('click', () => {
-    showConfirm('모든 기록을 초기화할까요? 되돌릴 수 없어요.', async () => {
-      records = [];
+    showConfirm(`"${TRACKS[boardTrack].label}" 종목의 기록을 모두 초기화할까요? 되돌릴 수 없어요.`, async () => {
+      records = records.filter(r => trackOf(r) !== boardTrack);
       await saveRecords();
       renderBoard();
     });
   });
 
   function renderBoard(){
+    $('boardTrackTong').classList.toggle('on', boardTrack === 'tong');
+    $('boardTrackNormal').classList.toggle('on', boardTrack === 'normal');
     $('tabList').classList.toggle('on', boardTab === 'list');
     $('tabClass').classList.toggle('on', boardTab === 'class');
     $('tabPodium').classList.toggle('on', boardTab === 'podium');
@@ -688,7 +771,7 @@
     const wrap = $('boardListWrap');
     const list = sortedRecords(filteredRecords());
     if(list.length === 0){
-      wrap.innerHTML = `<div class="empty-state"><span class="emoji">🥢</span>아직 기록이 없어요.<br>측정을 시작해보세요!</div>`;
+      wrap.innerHTML = `<div class="empty-state"><span class="emoji">🥢</span>${TRACKS[boardTrack].label} 기록이 아직 없어요.<br>측정을 시작해보세요!</div>`;
       return;
     }
     wrap.innerHTML = list.map((r, i) => {
@@ -696,7 +779,7 @@
       const rankClass = rank <= 3 ? 'rank' + rank : '';
       const thumb = r.photo
         ? `<img class="board-thumb" src="${r.photo}" alt="${r.name}">`
-        : `<div class="board-thumb placeholder">🥢</div>`;
+        : '';
       return `
         <div class="board-row ${rankClass}">
           <div class="rank-badge">${medalFor(rank) || rank}</div>
@@ -731,7 +814,7 @@
       return;
     }
     const summary = classes.map(cls => {
-      const members = records.filter(r => (r.className || '미지정') === cls);
+      const members = trackRecords(boardTrack).filter(r => (r.className || '미지정') === cls);
       const avg = members.reduce((sum, r) => sum + r.timeMs, 0) / members.length;
       const best = Math.min(...members.map(r => r.timeMs));
       return { cls, count: members.length, avg, best };
@@ -754,8 +837,8 @@
     wrap.querySelectorAll('.class-reset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const cls = btn.getAttribute('data-class');
-        showConfirm(`"${cls}" 반의 기록만 초기화할까요? 되돌릴 수 없어요.`, async () => {
-          records = records.filter(r => (r.className || '미지정') !== cls);
+        showConfirm(`[${TRACKS[boardTrack].label}] "${cls}" 반의 기록만 초기화할까요? 되돌릴 수 없어요.`, async () => {
+          records = records.filter(r => !(trackOf(r) === boardTrack && (r.className || '미지정') === cls));
           await saveRecords();
           renderBoard();
         });
